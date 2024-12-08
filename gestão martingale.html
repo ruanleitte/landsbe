@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Operações</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            overflow-x: hidden;
+            height: 100vh;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .currency {
+            text-align: right;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            text-align: right;
+        }
+
+        #sidebar {
+            position: fixed;
+            height: 100%;
+            z-index: 1000;
+            background-color: #2D3748;
+        }
+
+        .icon-only {
+            width: 50px;
+        }
+
+        .sidebar-expanded {
+            width: 256px;
+        }
+
+        .sidebar-collapsed {
+            width: 70px;
+        }
+
+        .content {
+            transition: margin-left 0.2s ease-in-out;
+            flex: 1;
+            margin-left: 256px;
+            height: 100vh;
+        }
+
+        .popup-modal {
+            z-index: 2000;
+        }
+
+        .dropdown-menu {
+            display: none;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                position: fixed;
+                height: 100%;
+            }
+
+            .content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+        }
+
+        /* Estilo dos botões */
+        button {
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #63B3ED; /* Azul do Tailwind */
+            box-shadow: 0 0 0 1px #63B3ED;
+        }
+
+        /* Estilo da nova página Gestão */
+        th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        td,
+        th {
+            border-right: none;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        tr {
+            border-bottom: 1px solid #d1d5db; /* Same as border-gray-300 */
+        }
+
+        tr:last-child {
+            border-bottom: none;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #d1d5db; /* Same as border-gray-300 */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex">
+        <div id="sidebar" class="bg-gray-800 text-white space-y-6 py-7 px-2 transition duration-200 ease-in-out sidebar-expanded">
+            <a href="javascript:void(0);" class="text-white flex items-center space-x-2 px-4" id="toggle-button" aria-label="Alternar Menu">
+                <i class="fas fa-bars text-2xl"></i>
+            </a>
+            <nav id="nav-menu" aria-label="Menu Principal">
+                <a href="javascript:void(0);" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700" onclick="showPage('dashboard')">
+                    <i class="fas fa-tachometer-alt mr-2 icon-hidden"></i> <span class="menu-text">Dashboard</span>
+                </a>
+                <a href="javascript:void(0);" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700" onclick="showPage('operacao')">
+                    <i class="fas fa-cogs mr-2 icon-hidden"></i> <span class="menu-text">Operação</span>
+                </a>
+                <a href="javascript:void(0);" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700" onclick="showPage('resumo')">
+                    <i class="fas fa-chart-line mr-2 icon-hidden"></i> <span class="menu-text">Resumo</span>
+                </a>
+                <a href="javascript:void(0);" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700">
+                    <i class="fas fa-exchange-alt mr-2 icon-hidden"></i> <span class="menu-text">Movimentação</span>
+                </a>
+                <a href="javascript:void(0);" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700" onclick="showPage('gestao')">
+                    <i class="fas fa-cogs mr-2 icon-hidden"></i> <span class="menu-text">Gestão</span>
+                </a>
+            </nav>
+        </div>
+        <div class="flex-1 content">
+            <header class="flex justify-between items-center bg-white py-4 px-6">
+                <div class="flex items-center">
+                    <button id="menu-button" class="text-gray-500 focus:outline-none md:hidden" aria-label="Menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-gray-800 text-lg font-semibold">Sistema de Operações</span>
+                </div>
+            </header>
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
+                <section id="operacao" class="px-6 py-8 hidden">
+                    <h1 class="text-2xl font-semibold text-gray-800">Operação</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h2 class="text-lg font-semibold">Saldo Inicial</h2>
+                            <p id="card-saldo-inicial" class="mt-2 text-gray-700">R$ 0,00</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h2 class="text-lg font-semibold">Meta Desejada</h2>
+                            <p id="card-meta-desejada" class="mt-2 text-gray-700">R$ 0,00</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h2 class="text-lg font-semibold">Horário Inicial</h2>
+                            <p id="card-horario-inicial" class="mt-2 text-gray-700">00:00</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h2 class="text-lg font-semibold">Duração (Horas)</h2>
+                            <p id="card-duracao" class="mt-2 text-gray-700">0</p>
+                        </div>
+                    </div>
+                    <button class="mt-4 bg-blue-500 text-white py-2 px-4 rounded" onclick="openPopup()">Adicionar Informações</button>
+                    <div id="tabela-container" class="hidden mt-8">
+                        <div class="table-container overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead>
+                                    <tr>
+                                        <th class="py-2 px-4 border-b text-center">Data</th>
+                                        <th class="py-2 px-4 border-b text-center">Hora</th>
+                                        <th class="py-2 px-4 border-b text-center">Meta Hora</th>
+                                        <th class="py-2 px-4 border-b text-center">Saldo Inicial</th>
+                                        <th class="py-2 px-4 border-b text-center">Saldo Final</th>
+                                        <th class="py-2 px-4 border-b text-center">Resultado</th>
+                                        <th class="py-2 px-4 border-b text-center">ROI %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-body">
+                                </tbody>
+                            </table>
+                        </div>
+                        <button id="save-resumo" class="mt-4 bg-green-500 text-white py-2 px-4 rounded">Salvar Resumo</button>
+                    </div>
+                </section>
+                <section id="resumo" class="px-6 py-8 hidden">
+                    <h1 class="text-2xl font-semibold text-gray-800">Resumo</h1>
+                    <div class="relative inline-block text-left mb-4">
+                        <div class="flex items-center border border-gray-300 rounded-md px-3 py-2">
+                            <button class="text-gray-700" onclick="changeMonth(-1)" aria-label="Mês Anterior">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <span class="mx-2 text-gray-700 cursor-pointer" id="dropdownButton">01 Novembro 2024 - 30 Novembro 2024</span>
+                            <button class="text-gray-700" onclick="changeMonth(1)" aria-label="Próximo Mês">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div class="absolute mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 dropdown-menu" id="dropdownMenu">
+                            <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" onclick="selectDateRange('Este Mês')">Este Mês</a>
+                                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" onclick="selectDateRange('Últimos 30 Dias')">Últimos 30 Dias</a>
+                                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" onclick="selectDateRange('Últimos 3 Meses')">Últimos 3 Meses</a>
+                                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" onclick="selectDateRange('Últimos 6 Meses')">Últimos 6 Meses</a>
+                                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" onclick="selectDateRange('Data Customizada')">Data Customizada</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container overflow-x-auto">
+                        <table class="min-w-full bg-white mt-4">
+                            <thead>
+                                <tr>
+                                    <th class="py-2 px-4 border-b text-center">Data</th>
+                                    <th class="py-2 px-4 border-b text-center">Hora In</th>
+                                    <th class="py-2 px-4 border-b text-center">Hora Out</th>
+                                    <th class="py-2 px-4 border-b text-center">Saldo In</th>
+                                    <th class="py-2 px-4 border-b text-center">Saldo Fn</th>
+                                    <th class="py-2 px-4 border-b text-center">Resultado</th>
+                                    <th class="py-2 px-4 border-b text-center">Roi %</th>
+                                    <th class="py-2 px-4 border-b text-center">Apostas</th>
+                                    <th class="py-2 px-4 border-b text-center">Duração</th>
+                                    <th class="py-2 px-4 border-b text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resumo-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <section id="gestao" class="px-6 py-8 hidden">
+                    <h1 class="text-4xl font-bold text-center mb-6">GESTÃO DE BANCA</h1>
+                    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-blue-300 p-4 rounded-lg shadow-md">
+                                <label for="initialValue" class="block text-lg font-semibold mb-2 text-white">BANCA INICIAL</label>
+                                <input type="number" id="initialValue" class="border border-gray-400 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="R$ 40,00">
+                            </div>
+                            <div class="bg-blue-300 p-4 rounded-lg shadow-md">
+                                <label for="percentage" class="block text-lg font-semibold mb-2 text-white">DEFINIR META (%)</label>
+                                <input type="number" id="percentage" class="border border-gray-400 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="10">
+                            </div>
+                            <div class="flex items-center justify-center space-x-4">
+                                <button onclick="calculate()" class="bg-blue-600 text-white p-4 rounded-lg font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">Calcular</button>
+                                <button onclick="clearData()" class="bg-red-600 text-white p-4 rounded-lg font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-red-500">Limpar</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full border border-gray-400 rounded-lg">
+                                <thead>
+                                    <tr>
+                                        <th class="p-2 w-12 text-center">DIA</th>
+                                        <th class="p-2 text-center">BANCA</th>
+                                        <th class="p-2 text-center">1º Mart.</th>
+                                        <th class="p-2 text-center">2º Mart.</th>
+                                        <th class="p-2 text-center">3º Mart.</th>
+                                        <th class="p-2 text-center">CONFIRMADO</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                    <!-- Rows will be generated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="successMessage" class="hidden mt-4 p-4 bg-green-100 text-green-700 rounded-lg">
+                            Tabela calculada com sucesso!
+                        </div>
+                        <div id="errorMessage" class="hidden mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
+                            Por favor, insira valores válidos.
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div id="popup-modal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden popup-modal">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96 z-50">
+            <h2 class="text-xl font-semibold mb-4">Adicionar Informações</h2>
+            <div class="mb-4">
+                <label for="popup-saldo-inicial" class="block text-sm font-medium text-gray-700">Saldo Inicial</label>
+                <input type="text" id="popup-saldo-inicial" class="mt-1 p-2 border rounded w-full" placeholder="R$ 0,00" oninput="formatCurrencyInput(this)">
+            </div>
+            <div class="mb-4">
+                <label for="popup-meta-desejada" class="block text-sm font-medium text-gray-700">Meta Desejada</label>
+                <input type="text" id="popup-meta-desejada" class="mt-1 p-2 border rounded w-full" placeholder="R$ 0,00" oninput="formatCurrencyInput(this)">
+            </div>
+            <div class="mb-4">
+                <label for="popup-horario-inicial" class="block text-sm font-medium text-gray-700">Horário Inicial</label>
+                <input type="time" id="popup-horario-inicial" class="mt-1 p-2 border rounded w-full">
+            </div>
+            <div class="mb-4">
+                <label for="popup-data" class="block text-sm font-medium text-gray-700">Data</label>
+                <input type="date" id="popup-data" class="mt-1 p-2 border rounded w-full">
+            </div>
+            <div class="mb-4">
+                <label for="popup-duracao" class="block text-sm font-medium text-gray-700">Duração (Horas)</label>
+                <input type="number" id="popup-duracao" class="mt-1 p-2 border rounded w-full" placeholder="Horas">
+            </div>
+            <button id="save-cards" class="bg-blue-500 text-white py-2 px-4 rounded">Salvar Informações</button>
+            <button class="bg-red-500 text-white py-2 px-4 rounded ml-2" onclick="closePopup()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        let currentMonth = 10; // Novembro (0-based index)
+        let currentYear = 2024;
+
+        document.getElementById('dropdownButton').addEventListener('click', function () {
+            document.getElementById('dropdownMenu').classList.toggle('show');
+        });
+
+        function selectDateRange(range) {
+            document.getElementById('dropdownButton').innerText = range;
+            document.getElementById('dropdownMenu').classList.remove('show');
+            if (range === 'Este Mês') {
+                currentMonth = new Date().getMonth(); // Reset para o mês atual
+                currentYear = new Date().getFullYear();
+                updateDateRange();
+                filterResumoRows();
+            }
+        }
+
+        function changeMonth(direction) {
+            currentMonth += direction;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear -= 1;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear += 1;
+            }
+            updateDateRange();
+            filterResumoRows(); // Filtrar as linhas após a mudança de mês
+        }
+
+        function updateDateRange() {
+            const startDate = `01 ${monthNames[currentMonth]} ${currentYear}`;
+            const endDate = new Date(currentYear, currentMonth + 1, 0).getDate() + ` ${monthNames[currentMonth]} ${currentYear}`;
+            document.getElementById('dropdownButton').innerText = `${startDate} - ${endDate}`;
+        }
+
+        function filterResumoRows() {
+            const rows = document.querySelectorAll('#resumo-body tr');
+            rows.forEach(row => {
+                const rowDate = new Date(row.cells[0].textContent.split('/').reverse().join('/')); // Formato dd/mm/yyyy
+                const startDate = new Date(currentYear, currentMonth, 1);
+                const endDate = new Date(currentYear, currentMonth + 1, 0);
+                row.style.display = (rowDate >= startDate && rowDate <= endDate) ? '' : 'none';
+            });
+        }
+
+        window.onclick = function (event) {
+            if (!event.target.matches('#dropdownButton') && !event.target.closest('#dropdownButton')) {
+                var dropdowns = document.getElementsByClassName("dropdown-menu");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        let idCounter = 100000;
+        let menuCollapsed = false;
+
+        function showPage(pageId) {
+            const sections = document.querySelectorAll('section');
+            sections.forEach(function (section) {
+                section.classList.toggle('hidden', section.id !== pageId);
+            });
+        }
+
+        showPage('operacao');
+
+        function formatCurrencyInput(input) {
+            let value = input.value.replace(/[^\d]/g, '');
+            if (value.length > 2) {
+                value = value.replace(/(\d)(\d{2})$/, '$1,$2');
+            }
+            if (value.length > 6) {
+                value = value.replace(/(\d)(\d{3})(\d{3})$/, '$1.$2.$3');
+            }
+            input.value = 'R$ ' + value;
+        }
+
+        function formatCurrency(value) {
+            return `R$ ${value.toFixed(2).replace('.', ',').replace(/\d(?=(\d{3})+(\D))/g, '$&.')}`;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function openPopup() {
+            document.getElementById('popup-modal').classList.remove('hidden');
+        }
+
+        function closePopup() {
+            document.getElementById('popup-modal').classList.add('hidden');
+        }
+
+        document.getElementById('save-cards').addEventListener('click', function () {
+            const saldoInicial = parseFloat(document.getElementById('popup-saldo-inicial').value.replace('R$', '').replace('.', '').replace(',', '.')) || 0;
+            const metaDesejada = parseFloat(document.getElementById('popup-meta-desejada').value.replace('R$', '').replace('.', '').replace(',', '.')) || 0;
+            const horarioInicial = document.getElementById('popup-horario-inicial').value;
+            const data = document.getElementById('popup-data').value;
+            const duracao = parseInt(document.getElementById('popup-duracao').value) || 0;
+
+            document.getElementById('card-saldo-inicial').textContent = formatCurrency(saldoInicial);
+            document.getElementById('card-meta-desejada').textContent = formatCurrency(metaDesejada);
+            document.getElementById('card-horario-inicial').textContent = horarioInicial;
+            document.getElementById('card-duracao').textContent = duracao;
+
+            const totalRows = duracao;
+            let currentHour = new Date(`1970-01-01T${horarioInicial}:00`);
+
+            for (let i = 0; i < totalRows; i++) {
+                currentHour.setHours(currentHour.getHours() + 1);
+                const formattedHour = currentHour.toTimeString().slice(0, 5);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4 border-b text-center">${formatDate(data)}</td>
+                    <td class="py-2 px-4 border-b text-center">${formattedHour}</td>
+                    <td class="py-2 px-4 border-b text-center">${(metaDesejada / duracao).toFixed(2)}</td>
+                    <td class="py-2 px-4 border-b text-center"><input type="text" class="w-24 mx-auto border-none text-center" placeholder="R$ 0,00" oninput="formatCurrencyInput(this)"></td>
+                    <td class="py-2 px-4 border-b text-center"><input type="text" class="w-24 mx-auto border-none text-center" placeholder="R$ 0,00" oninput="formatCurrencyInput(this)"></td>
+                    <td class="py-2 px-4 border-b text-center resultado"></td>
+                    <td class="py-2 px-4 border-b text-center roi"></td>
+                `;
+                document.getElementById('tabela-body').appendChild(row);
+                idCounter++;
+            }
+            document.getElementById('tabela-container').classList.remove('hidden');
+            closePopup();
+        });
+
+        function calculateResults() {
+            const rows = document.querySelectorAll('#tabela-body tr');
+            rows.forEach(function (row) {
+                const saldoInicialInput = row.querySelector('td:nth-child(4) input').value.replace('R$', '').replace('.', '').replace(',', '.');
+                const saldoFinalInput = row.querySelector('td:nth-child(5) input').value.replace('R$', '').replace('.', '').replace(',', '.');
+
+                const saldoInicial = parseFloat(saldoInicialInput) || 0;
+                const saldoFinal = parseFloat(saldoFinalInput) || 0;
+                const resultado = saldoFinal - saldoInicial;
+                const roi = saldoInicial !== 0 ? (resultado / saldoInicial) * 100 : 0;
+
+                row.querySelector('.resultado').textContent = saldoInicialInput && saldoFinalInput ? formatCurrency(resultado) : '';
+                row.querySelector('.resultado').classList.remove('text-red-500', 'text-green-500');
+                if (saldoInicialInput && saldoFinalInput) {
+                    row.querySelector('.resultado').classList.add(resultado < 0 ? 'text-red-500' : 'text-green-500');
+                }
+                row.querySelector('.roi').textContent = saldoInicialInput && saldoFinalInput ? roi.toFixed(2) + '%' : '';
+            });
+        }
+
+        document.getElementById('tabela-body').addEventListener('input', function (event) {
+            if (event.target.tagName === 'INPUT') {
+                calculateResults();
+                saveToLocalStorage();
+            }
+        });
+
+        document.getElementById('save-resumo').addEventListener('click', function () {
+            const tabelaBodyOperacao = document.getElementById('tabela-body');
+            const rowsOperacao = tabelaBodyOperacao.querySelectorAll('tr');
+
+            let saldoInicialTotal = 0;
+            let saldoFinalTotal = 0;
+            let resultadoTotal = 0;
+            let roiTotal = 0;
+            let apostasCount = 0;
+
+            rowsOperacao.forEach((row) => {
+                const saldoIn = parseFloat(row.querySelector('td:nth-child(4) input').value.replace('R$', '').replace('.', '').replace(',', '.')) || 0;
+                const saldoFn = parseFloat(row.querySelector('td:nth-child(5) input').value.replace('R$', '').replace('.', '').replace(',', '.')) || 0;
+
+                if (saldoIn && saldoFn) {
+                    const resultado = saldoFn - saldoIn;
+                    const roi = saldoIn > 0 ? ((resultado / saldoIn) * 100).toFixed(2) : '0.00';
+
+                    saldoInicialTotal += saldoIn;
+                    saldoFinalTotal += saldoFn;
+                    resultadoTotal += resultado;
+                    roiTotal += parseFloat(roi) || 0;
+                    apostasCount++;
+                }
+            });
+
+            const roiMedio = apostasCount > 0 ? (roiTotal / apostasCount).toFixed(2) : '0.00';
+
+            const data = formatDate(document.getElementById('popup-data').value);
+            const horaIn = document.getElementById('card-horario-inicial').textContent;
+            const horaOut = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const duracao = calculateDuration(horaIn, horaOut);
+
+            const resumoRow = document.createElement('tr');
+            resumoRow.innerHTML = `
+                <td class="py-2 px-4 border-b text-center">${data}</td>
+                <td class="py-2 px-4 border-b text-center">${horaIn}</td>
+                <td class="py-2 px-4 border-b text-center">${horaOut}</td>
+                <td class="py-2 px-4 border-b text-center">${formatCurrency(saldoInicialTotal)}</td>
+                <td class="py-2 px-4 border-b text-center">${formatCurrency(saldoFinalTotal)}</td>
+                <td class="py-2 px-4 border-b text-center ${resultadoTotal < 0 ? 'text-red-500' : 'text-green-500'}">${formatCurrency(resultadoTotal)}</td>
+                <td class="py-2 px-4 border-b text-center">${roiMedio}%</td>
+                <td class="py-2 px-4 border-b text-center">${apostasCount}</td>
+                <td class="py-2 px-4 border-b text-center">${duracao}</td>
+                <td class="py-2 px-4 border-b text-center">
+                    <i class="fas fa-trash text-red-500 cursor-pointer ml-2" onclick="deleteRow(this)"></i>
+                </td>
+            `;
+            document.getElementById('resumo-body').appendChild(resumoRow);
+
+            tabelaBodyOperacao.innerHTML = '';
+            saveToLocalStorage();
+        });
+
+        function deleteRow(icon) {
+            const row = icon.closest('tr');
+            row.remove();
+            saveToLocalStorage();
+        }
+
+        function calculateDuration(start, end) {
+            const [startHours, startMinutes] = start.split(':').map(Number);
+            const [endHours, endMinutes] = end.split(':').map(Number);
+
+            let startDate = new Date(0, 0, 0, startHours, startMinutes);
+            let endDate = new Date(0, 0, 0, endHours, endMinutes);
+
+            if (endDate < startDate) {
+                endDate.setDate(endDate.getDate() + 1);
+            }
+
+            const diff = endDate - startDate;
+            const diffHours = Math.floor(diff / (1000 * 60 * 60));
+            const diffMinutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            return `${String(diffHours).padStart(2, '0')}:${String(diffMinutes).padStart(2, '0')}`;
+        }
+
+        document.getElementById('toggle-button').addEventListener('click', function () {
+            menuCollapsed = !menuCollapsed;
+            if (menuCollapsed) {
+                document.querySelectorAll('.menu-text').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.fa').forEach(el => el.classList.remove('icon-hidden'));
+                document.getElementById('sidebar').classList.remove('sidebar-expanded');
+                document.getElementById('sidebar').classList.add('sidebar-collapsed');
+                document.querySelector('.content').classList.add('ml-16');
+            } else {
+                document.querySelectorAll('.menu-text').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.fa').forEach(el => el.classList.add('icon-hidden'));
+                document.getElementById('sidebar').classList.remove('sidebar-collapsed');
+                document.getElementById('sidebar').classList.add('sidebar-expanded');
+                document.querySelector('.content').classList.remove('ml-16');
+            }
+        });
+
+        function saveToLocalStorage() {
+            const operacaoData = {
+                saldoInicial: document.getElementById('card-saldo-inicial').textContent,
+                metaDesejada: document.getElementById('card-meta-desejada').textContent,
+                horarioInicial: document.getElementById('card-horario-inicial').textContent,
+                duracao: document.getElementById('card-duracao').textContent,
+                tabelaRows: []
+            };
+
+            const rows = document.querySelectorAll('#tabela-body tr');
+            rows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll('td'));
+                const dataRow = {
+                    data: cells[0].textContent,
+                    hora: cells[1].textContent,
+                    metaHora: cells[2].textContent,
+                    saldoInicial: cells[3].querySelector('input').value,
+                    saldoFinal: cells[4].querySelector('input').value,
+                    resultado: cells[5].textContent,
+                    roi: cells[6].textContent
+                };
+                operacaoData.tabelaRows.push(dataRow);
+            });
+
+            const resumoRows = document.querySelectorAll('#resumo-body tr');
+            const resumoData = [];
+            resumoRows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll('td'));
+                const resumoRow = {
+                    data: cells[0].textContent,
+                    horaIn: cells[1].textContent,
+                    horaOut: cells[2].textContent,
+                    saldoIn: cells[3].textContent,
+                    saldoFn: cells[4].textContent,
+                    resultado: cells[5].textContent,
+                    roi: cells[6].textContent,
+                    apostas: cells[7].textContent,
+                    duracao: cells[8].textContent
+                };
+                resumoData.push(resumoRow);
+            });
+
+            localStorage.setItem('operacaoData', JSON.stringify(operacaoData));
+            localStorage.setItem('resumoData', JSON.stringify(resumoData));
+        }
+
+        function loadFromLocalStorage() {
+            const operacaoData = JSON.parse(localStorage.getItem('operacaoData'));
+            const resumoData = JSON.parse(localStorage.getItem('resumoData'));
+
+            if (operacaoData) {
+                document.getElementById('card-saldo-inicial').textContent = operacaoData.saldoInicial;
+                document.getElementById('card-meta-desejada').textContent = operacaoData.metaDesejada;
+                document.getElementById('card-horario-inicial').textContent = operacaoData.horarioInicial;
+                document.getElementById('card-duracao').textContent = operacaoData.duracao;
+
+                operacaoData.tabelaRows.forEach(rowData => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="py-2 px-4 border-b text-center">${rowData.data}</td>
+                        <td class="py-2 px-4 border-b text-center">${rowData.hora}</td>
+                        <td class="py-2 px-4 border-b text-center">${rowData.metaHora}</td>
+                        <td class="py-2 px-4 border-b text-center"><input type="text" class="w-24 mx-auto border-none text-center" placeholder="R$ 0,00" value="${rowData.saldoInicial}" oninput="formatCurrencyInput(this)"></td>
+                        <td class="py-2 px-4 border-b text-center"><input type="text" class="w-24 mx-auto border-none text-center" placeholder="R$ 0,00" value="${rowData.saldoFinal}" oninput="formatCurrencyInput(this)"></td>
+                        <td class="py-2 px-4 border-b text-center resultado"></td>
+                        <td class="py-2 px-4 border-b text-center roi"></td>
+                    `;
+                    document.getElementById('tabela-body').appendChild(row);
+                });
+
+                document.getElementById('tabela-container').classList.remove('hidden');
+            }
+
+            if (resumoData) {
+                resumoData.forEach(rowData => {
+                    const resumoRow = document.createElement('tr');
+                    resumoRow.innerHTML = `
+                        <td class="py-2 px-4 border-b text-center">${rowData.data}</td>
+                        <td class="py-2 px-4 border-b text-center">${rowData.horaIn}</td>
+                        <td class="py-2 px-4 border-b text-center">${rowData.horaOut}</td>
+                        <td class="py-2 px-4 border-b text-center">${rowData.saldoIn}</td>
+                        <td class="py-2 px-4 border-b text-center">${rowData.saldoFn}</td>
+                        <td class="py-2 px-4 border-b text-center ${parseFloat(rowData.resultado.replace('R$ ', '').replace('.', '').replace(',', '.')) < 0 ? 'text-red-500' : 'text-green-500'}">${rowData.resultado}</td>
+                        <td class="py-2 px-4 border-b text-center">${rowData.roi}</td>
+                        <td class="py-2 px-4 border-b text-center">${rowData.apostas}</td>
+                        <td class="py-2 px-4 border-b text-center">${rowData.duracao}</td>
+                        <td class="py-2 px-4 border-b text-center">
+                            <i class="fas fa-trash text-red-500 cursor-pointer ml-2" onclick="deleteRow(this)"></i>
+                        </td>
+                    `;
+                    document.getElementById('resumo-body').appendChild(resumoRow);
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTableData();
+            loadFromLocalStorage();
+        });
+
+        function calculate() {
+            const initialValue = parseFloat(document.getElementById('initialValue').value);
+            const percentage = parseFloat(document.getElementById('percentage').value) / 100;
+            const tableBody = document.getElementById('tableBody');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+
+            if (isNaN(initialValue) || isNaN(percentage) || initialValue <= 0 || percentage <= 0) {
+                errorMessage.classList.remove('hidden');
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 3000);
+                return;
+            }
+
+            tableBody.innerHTML = '';
+            let banca = initialValue;
+            const tableData = [];
+
+            for (let day = 1; day <= 30; day++) {
+                const metaDiaria = banca * percentage;
+                const aposta1 = metaDiaria / 10;
+                const martingale1 = aposta1 * 2;
+                const martingale2 = martingale1 * 2;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="p-2 text-center">${day}</td>
+                    <td class="p-2 text-center">R$ ${banca.toFixed(2)}</td>
+                    <td class="p-2 text-center">R$ ${aposta1.toFixed(2)}</td>
+                    <td class="p-2 text-center">R$ ${martingale1.toFixed(2)}</td>
+                    <td class="p-2 text-center">R$ ${martingale2.toFixed(2)}</td>
+                    <td class="p-2 text-center"><input type="checkbox" onclick="toggleRowCompletion(this)"></td>
+                `;
+                tableBody.appendChild(row);
+
+                tableData.push({
+                    day,
+                    banca: banca.toFixed(2),
+                    aposta1: aposta1.toFixed(2),
+                    martingale1: martingale1.toFixed(2),
+                    martingale2: martingale2.toFixed(2),
+                    confirmed: false
+                });
+
+                banca += metaDiaria;
+            }
+
+            localStorage.setItem('tableData', JSON.stringify(tableData));
+
+            successMessage.classList.remove('hidden');
+            setTimeout(() => {
+                successMessage.classList.add('hidden');
+            }, 3000);
+        }
+
+        function clearData() {
+            document.getElementById('initialValue').value = '';
+            document.getElementById('percentage').value = '';
+            document.getElementById('tableBody').innerHTML = '';
+            localStorage.removeItem('tableData');
+        }
+
+        function toggleRowCompletion(checkbox) {
+            const row = checkbox.closest('tr');
+            const day = row.children[0].innerText;
+            const tableData = JSON.parse(localStorage.getItem('tableData'));
+
+            const rowData = tableData.find(data => data.day == day);
+            rowData.confirmed = checkbox.checked;
+
+            localStorage.setItem('tableData', JSON.stringify(tableData));
+
+            if (checkbox.checked) {
+                row.classList.add('bg-gray-200');
+            } else {
+                row.classList.remove('bg-gray-200');
+            }
+        }
+
+        function loadTableData() {
+            const tableData = JSON.parse(localStorage.getItem('tableData'));
+            if (!tableData) return;
+
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            tableData.forEach(data => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="p-2 text-center">${data.day}</td>
+                    <td class="p-2 text-center">R$ ${data.banca}</td>
+                    <td class="p-2 text-center">R$ ${data.aposta1}</td>
+                    <td class="p-2 text-center">R$ ${data.martingale1}</td>
+                    <td class="p-2 text-center">R$ ${data.martingale2}</td>
+                    <td class="p-2 text-center"><input type="checkbox" ${data.confirmed ? 'checked' : ''} onclick="toggleRowCompletion(this)"></td>
+                `;
+                if (data.confirmed) {
+                    row.classList.add('bg-gray-200');
+                }
+                tableBody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+
+</html>
